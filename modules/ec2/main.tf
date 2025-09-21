@@ -1,24 +1,32 @@
-# optional key pair (create only when create_key = true)
-resource "aws_key_pair" "this" {
-  count      = var.create_key ? 1 : 0
-  key_name   = var.key_name != "" ? var.key_name : "${var.name}-key"
-  public_key = file(var.public_key_path)
+# Generate key only for first instance
+resource "tls_private_key" "key" {
+  count      = var.first_instance ? 1 : 0
+  algorithm  = "RSA"
+  rsa_bits   = 4096
 }
 
 resource "aws_instance" "this" {
   ami                    = var.ami
   instance_type          = var.instance_type
-  subnet_id              = var.subnet_id != "" ? var.subnet_id : null
-  vpc_security_group_ids = length(var.security_group_ids) > 0 ? var.security_group_ids : null
+  subnet_id              = var.subnet_id
+  vpc_security_group_ids = var.security_group_ids
+  key_name               = var.key_name
 
-  # set key_name only when create_key = true OR existing_key_name provided
-  key_name = var.create_key ? aws_key_pair.this[0].key_name : (var.existing_key_name != "" ? var.existing_key_name : null)
+  tags = merge(var.tags, { Name = var.name })
+}
 
-  # small root disk (default), keep it simple and safe
-  root_block_device {
-    volume_size = var.root_volume_size
-    delete_on_termination = true
+# Output private key only for first instance
+output "private_key_pem" {
+  value     = var.first_instance ? tls_private_key.key[0].private_key_pem : ""
+  sensitive = true
+}
+
+# Instance info
+output "instance" {
+  value = {
+    id         = aws_instance.this.id
+    public_ip  = aws_instance.this.public_ip
+    private_ip = aws_instance.this.private_ip
+    key_name   = aws_instance.this.key_name
   }
-
-  tags = merge({ Name = var.name }, var.tags)
 }

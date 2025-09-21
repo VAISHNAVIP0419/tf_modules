@@ -1,101 +1,115 @@
-# VPC module (simple public subnets and IGW)
+# =========================
+# VPC module
+# =========================
 module "vpc" {
   source = "./modules/vpc"
-  count  = var.enable_vpc ? 1 : 0
 
-  name           = "simple-vpc"
-  cidr           = "10.0.0.0/16"
-  azs            = ["ap-south-1a", "ap-south-1b", "ap-south-1c"]
-  public_subnets = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
+  name_prefix     = "${var.name_prefix}-vpc"
+  cidr            = var.vpc_cidr
+  azs             = var.azs
+  public_subnets  = var.public_subnets
+  private_subnets = var.private_subnets
+  tags            = var.common_tags
 }
 
-# Security Group module (uses vpc if created)
+# =========================
+# Security Group module
+# =========================
 module "sg" {
   source = "./modules/sg"
-  count  = var.enable_sg ? 1 : 0
 
-  name               = "simple-sg"
-  vpc_id             = var.enable_vpc ? module.vpc[0].vpc_id : ""
-  ssh_cidr_blocks    = ["0.0.0.0/0"]
-  web_cidr_blocks    = ["0.0.0.0/0"]
-  tags               = { Environment = "dev" }
+  name       = "${var.name_prefix}-sg"
+  vpc_id     = module.vpc.vpc_id
+  ssh_cidr   = var.ssh_cidr
+  allow_http = true
+  tags       = var.common_tags
 }
 
-# EC2 instances - 4 simple module calls (comment any module block to destroy/recreate that instance)
-module "ec2_server_1" {
-  source = "./modules/ec2"
-  count  = var.enable_ec2_1 ? 1 : 0
-
-  name              = "server-1"
-  ami               = "ami-0f58b397bc5c1f2e8"
-  instance_type     = "t3.micro"
-  subnet_id         = var.enable_vpc ? module.vpc[0].public_subnet_ids[0] : ""
-  security_group_ids = var.enable_sg ? [module.sg[0].security_group_id] : []
-  create_key        = true     # <-- create a key from local public key file
-  public_key_path   = var.public_key_path
-  tags              = { Environment = "dev" }
-}
-
-module "ec2_server_2" {
-  source = "./modules/ec2"
-  count  = var.enable_ec2_2 ? 1 : 0
-
-  name              = "server-2"
-  ami               = "ami-0f58b397bc5c1f2e8"
-  instance_type     = "t3.micro"
-  subnet_id         = var.enable_vpc ? module.vpc[0].public_subnet_ids[1] : ""
-  security_group_ids = var.enable_sg ? [module.sg[0].security_group_id] : []
-  create_key        = false    # <-- use existing key name
-  existing_key_name = "my-existing-key"  # set your existing key name if using false
-  tags              = { Environment = "dev" }
-}
-
-module "ec2_server_3" {
-  source = "./modules/ec2"
-  count  = var.enable_ec2_3 ? 1 : 0
-
-  name              = "server-3"
-  ami               = "ami-0f58b397bc5c1f2e8"
-  instance_type     = "t3.micro"
-  subnet_id         = var.enable_vpc ? module.vpc[0].public_subnet_ids[2] : ""
-  security_group_ids = var.enable_sg ? [module.sg[0].security_group_id] : []
-  create_key        = false
-  existing_key_name = "my-existing-key"
-  tags              = { Environment = "dev" }
-}
-
-module "ec2_server_4" {
-  source = "./modules/ec2"
-  count  = var.enable_ec2_4 ? 1 : 0
-
-  name              = "server-4"
-  ami               = "ami-0f58b397bc5c1f2e8"
-  instance_type     = "t3.micro"
-  subnet_id         = var.enable_vpc ? module.vpc[0].public_subnet_ids[0] : ""
-  security_group_ids = var.enable_sg ? [module.sg[0].security_group_id] : []
-  create_key        = false
-  existing_key_name = "my-existing-key"
-  tags              = { Environment = "dev" }
-}
-
-# S3 module - optional
+# =========================
+# S3 module
+# =========================
 module "s3" {
   source = "./modules/s3"
-  count  = var.enable_s3 ? 1 : 0
 
-  bucket_name = "simple-tf-bucket-${substr(md5(timestamp()),0,6)}"
-  versioning  = false
-  tags        = { Environment = "dev" }
+  bucket_prefix = var.s3_bucket_prefix
+  versioning    = false
+  tags          = var.common_tags
 }
 
-# EBS snapshot module (creates 1 GiB volume and snapshot)
-module "ebs_snapshot" {
-  source = "./modules/ebs"
-  count  = var.enable_ebs_snapshot ? 1 : 0
+# =========================
+# Generate SSH key once
+# =========================
+resource "tls_private_key" "tf_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
 
-  name = "test-ebs"
-  az   = "ap-south-1a"
-  size = 1
-  create = true
-  tags = { Environment = "dev" }
+resource "aws_key_pair" "tf_key" {
+  key_name   = var.ec2_key_name
+  public_key = tls_private_key.tf_key.public_key_openssh
+}
+
+# =========================
+# EC2 Instances
+# =========================
+module "ec2_1" {
+  source        = "./modules/ec2"
+  first_instance = true
+
+  ami               = var.ec2_ami
+  instance_type     = var.ec2_instance_type
+  subnet_id         = module.vpc.public_subnet_ids[0]
+  security_group_ids = [module.sg.sg_id]
+  key_name          = aws_key_pair.tf_key.key_name
+  tags              = var.common_tags
+  name              = "${var.name_prefix}-ec2-1"
+}
+
+module "ec2_2" {
+  source         = "./modules/ec2"
+  first_instance = false
+
+  ami               = var.ec2_ami
+  instance_type     = var.ec2_instance_type
+  subnet_id         = module.vpc.public_subnet_ids[1]
+  security_group_ids = [module.sg.sg_id]
+  key_name          = aws_key_pair.tf_key.key_name
+  tags              = var.common_tags
+  name              = "${var.name_prefix}-ec2-2"
+}
+
+module "ec2_3" {
+  source         = "./modules/ec2"
+  first_instance = false
+
+  ami               = var.ec2_ami
+  instance_type     = var.ec2_instance_type
+  subnet_id         = module.vpc.public_subnet_ids[0]
+  security_group_ids = [module.sg.sg_id]
+  key_name          = aws_key_pair.tf_key.key_name
+  tags              = var.common_tags
+  name              = "${var.name_prefix}-ec2-3"
+}
+
+module "ec2_4" {
+  source         = "./modules/ec2"
+  first_instance = false
+
+  ami               = var.ec2_ami
+  instance_type     = var.ec2_instance_type
+  subnet_id         = module.vpc.public_subnet_ids[1]
+  security_group_ids = [module.sg.sg_id]
+  key_name          = aws_key_pair.tf_key.key_name
+  tags              = var.common_tags
+  name              = "${var.name_prefix}-ec2-4"
+}
+
+# =========================
+# EBS snapshot
+# =========================
+module "ebs_snapshot" {
+  source            = "./modules/ebs"
+  availability_zone = var.azs[0]
+  size_gb           = 1
+  tags              = var.common_tags
 }

@@ -1,29 +1,24 @@
 variable "name" {
   type    = string
-  default = "simple-sg"
+  default = "tf-sg"
 }
 
 variable "vpc_id" {
-  type    = string
+  type = string
   default = ""
 }
 
-variable "ssh_cidr_blocks" {
-  type    = list(string)
-  default = ["0.0.0.0/0"]
-}
-
-variable "web_cidr_blocks" {
-  type    = list(string)
-  default = ["0.0.0.0/0"]
-}
-
-variable "description" {
+variable "ssh_cidr" {
   type    = string
-  default = "Simple SG"
+  default = "0.0.0.0/0"
+}
+
+variable "allow_http" {
+  type    = bool
+  default = true
 }
 
 variable "tags" {
-  type    = map(string)
+  type = map(string)
   default = {}
 }

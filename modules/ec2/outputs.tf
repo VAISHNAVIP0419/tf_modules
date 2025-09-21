@@ -6,6 +6,6 @@ output "public_ip" {
   value = aws_instance.this.public_ip
 }
 
-output "key_name_used" {
-  value = var.create_key ? aws_key_pair.this[0].key_name : var.existing_key_name
+output "key_name" {
+  value = aws_instance.this.key_name
 }

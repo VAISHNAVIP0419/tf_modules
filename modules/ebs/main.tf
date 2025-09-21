@@ -1,13 +1,11 @@
-# create a 1 GiB volume and snapshot it when create = true
-resource "aws_ebs_volume" "test_vol" {
-  count             = var.create ? 1 : 0
-  availability_zone = var.az
-  size              = var.size
-  tags              = merge({ Name = "${var.name}-vol" }, var.tags)
+resource "aws_ebs_volume" "test" {
+  availability_zone = var.availability_zone
+  size              = var.size_gb
+  tags              = merge(var.tags, { Name = "tf-ebs-test" })
 }
 
-resource "aws_ebs_snapshot" "test_snap" {
-  count     = var.create ? 1 : 0
-  volume_id = aws_ebs_volume.test_vol[0].id
-  tags      = merge({ Name = "${var.name}-snap" }, var.tags)
+resource "aws_ebs_snapshot" "snap" {
+  volume_id   = aws_ebs_volume.test.id
+  description = "test snapshot by terraform - small 1GB"
+  tags        = merge(var.tags, { Name = "tf-ebs-snap" })
 }

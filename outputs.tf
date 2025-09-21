@@ -1,24 +1,39 @@
 output "vpc_id" {
-  value = try(module.vpc[0].vpc_id, null)
+  value = module.vpc.vpc_id
 }
 
-output "public_subnet_ids" {
-  value = try(module.vpc[0].public_subnet_ids, [])
+output "public_subnets" {
+  value = module.vpc.public_subnet_ids
 }
 
-output "security_group_id" {
-  value = try(module.sg[0].security_group_id, null)
+output "sg_id" {
+  value = module.sg.sg_id
 }
 
-output "ec2_instance_ids" {
-  value = [
-    try(module.ec2_server_1[0].instance_id, null),
-    try(module.ec2_server_2[0].instance_id, null),
-    try(module.ec2_server_3[0].instance_id, null),
-    try(module.ec2_server_4[0].instance_id, null),
-  ]
+output "ec2_1_info" {
+  value = module.ec2_1.instance
 }
 
-output "ebs_snapshot_id" {
-  value = try(module.ebs_snapshot[0].snapshot_id, null)
+output "ec2_2_info" {
+  value = module.ec2_2.instance
+}
+
+output "ec2_3_info" {
+  value = module.ec2_3.instance
+}
+
+output "ec2_4_info" {
+  value = module.ec2_4.instance
+}
+
+output "ebs_snapshot_info" {
+  value = {
+    volume_id   = module.ebs_snapshot.volume_id
+    snapshot_id = module.ebs_snapshot.snapshot_id
+  }
+}
+
+output "ec2_private_key_pem" {
+  value     = module.ec2_1.private_key_pem
+  sensitive = true
 }

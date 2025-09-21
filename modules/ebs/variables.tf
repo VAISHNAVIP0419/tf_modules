@@ -1,24 +1,14 @@
-variable "name" {
-  type    = string
-  default = "test-ebs"
-}
-
-variable "az" {
+variable "availability_zone" {
   type    = string
   default = "ap-south-1a"
 }
 
-variable "size" {
+variable "size_gb" {
   type    = number
   default = 1
 }
 
-variable "create" {
-  type    = bool
-  default = false
-}
-
 variable "tags" {
-  type    = map(string)
+  type = map(string)
   default = {}
 }
