@@ -1,14 +1,35 @@
-Simple Terraform modular layout.
+# Terraform AWS Modules Practice
 
-How to use:
-1. Edit variables.tf to toggle modules (enable_ec2_1, enable_ebs_snapshot, etc).
-2. Or comment module blocks in main.tf to destroy/recreate a single module's resources.
-3. Run:
-   terraform init
-   terraform plan
-   terraform apply
+## Task
+Practice creating Terraform modules for different AWS resources so that each resource is reusable, isolated, and easy to manage.  
 
-Notes:
-- Default AWS region: ap-south-1.
-- EC2 module supports create_key = true (create aws_key_pair from local public key) or false (use existing_key_name).
-- EBS snapshot module creates a 1 GiB volume and snapshot (cheap).
+## Objective
+The goal of this task is to deploy a basic AWS infrastructure using Terraform, ensuring modularity and reusability. The infrastructure includes:
+
+- **VPC** with public subnets and an Internet Gateway  
+- **Security Group**  
+- **Four EC2 instances**  
+- **EBS volume and snapshot**  
+- **S3 bucket**  
+
+All Terraform code for this task is stored in the GitHub repository:  
+[https://github.com/VAISHNAVIP0419/tf_modules.git](https://github.com/VAISHNAVIP0419/tf_modules.git)  
+
+---
+
+## Terraform Modules
+
+1. **EC2 Module**  
+   - Launches EC2 instances with key pairs.  
+   - Associates instances with subnets and security groups.  
+
+2. **VPC Module**  
+   - Creates a VPC, public subnets, Internet Gateway, and route tables.  
+
+3. **EBS Snapshot Module**  
+   - Creates EBS volumes and snapshots for backup.  
+
+4. **S3 Module**  
+   - Creates an S3 bucket with versioning enabled and ownership enforced.  
+
+---
