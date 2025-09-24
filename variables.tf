@@ -27,7 +27,7 @@ variable "public_subnets" {
 
 variable "private_subnets" {
   type    = list(string)
-  default = ["10.0.1.0/24", "10.0.2.0/24"]
+  default = ["10.0.1.0/24"]
 }
 
 # Module switches (toggle to create/destroy)
@@ -43,7 +43,7 @@ variable "enable_sg" {
 
 variable "enable_s3" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "enable_ec2_1" {
@@ -53,7 +53,7 @@ variable "enable_ec2_1" {
 
 variable "enable_ec2_2" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "enable_ec2_3" {
@@ -63,19 +63,19 @@ variable "enable_ec2_3" {
 
 variable "enable_ec2_4" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "enable_ebs" {
   type    = bool
-  default = true
+  default = false
 }
 
 
 # EC2 defaults (free-tier friendly)
 variable "ec2_ami" {
   type    = string
-  default = "ami-0f58b397bc5c1f2e8" # user-specified AMI you asked for
+  default = "ami-0f58b397bc5c1f2e8"
 }
 variable "ec2_instance_type" {
   type    = string
