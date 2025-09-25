@@ -15,12 +15,6 @@ resource "aws_instance" "this" {
   tags = merge(var.tags, { Name = var.name })
 }
 
-# Output private key only for first instance
-output "private_key_pem" {
-  value     = var.first_instance ? tls_private_key.key[0].private_key_pem : ""
-  sensitive = true
-}
-
 # Instance info
 output "instance" {
   value = {
